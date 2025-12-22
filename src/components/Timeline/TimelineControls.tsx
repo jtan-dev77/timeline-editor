@@ -1,7 +1,7 @@
 import { useTimeline } from '../../contexts/TimelineContext'
 
 export default function TimelineControls() {
-  const { isPlaying, currentTime, duration, setCurrentTime, togglePlay, zoom, setZoom } = useTimeline()
+  const { isPlaying, currentTime, duration, setCurrentTime, togglePlay, zoom, setZoom, selectedClip, splitClip } = useTimeline()
 
   const formatTime = (seconds: number): string => {
     const mins = Math.floor(seconds / 60)
@@ -24,6 +24,12 @@ export default function TimelineControls() {
       setCurrentTime(0)
     }
     togglePlay()
+  }
+
+  const handleSplit = () => {
+    if (selectedClip && currentTime > selectedClip.startTime && currentTime < selectedClip.endTime) {
+      splitClip(selectedClip.id, currentTime)
+    }
   }
 
   return (
@@ -50,6 +56,18 @@ export default function TimelineControls() {
             />
           </svg>
         )}
+      </button>
+
+      <button
+        onClick={handleSplit}
+        disabled={!selectedClip || currentTime <= selectedClip.startTime || currentTime >= selectedClip.endTime}
+        className="p-2 rounded-lg bg-gray-600 hover:bg-gray-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white transition-colors"
+        aria-label="Split clip"
+        title="Split clip at playhead"
+      >
+        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+        </svg>
       </button>
 
       <div className="flex-1 flex items-center gap-2">

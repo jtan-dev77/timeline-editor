@@ -14,7 +14,7 @@ export default function TimelineTrack({ type, clips, pixelsPerSecond }: Timeline
   const trackRef = useRef<HTMLDivElement>(null)
   const contentRef = useRef<HTMLDivElement>(null)
   const [isDraggingOver, setIsDraggingOver] = useState(false)
-  const { addClipToTrack } = useTimeline()
+  const { addClipToTrack, selectClip } = useTimeline()
 
   const getTrackLabel = () => {
     switch (type) {
@@ -96,7 +96,11 @@ export default function TimelineTrack({ type, clips, pixelsPerSecond }: Timeline
       <div className="absolute left-0 top-0 bottom-0 w-24 bg-gray-100 dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 flex items-center justify-center text-xs font-medium text-gray-700 dark:text-gray-300 z-10">
         {getTrackLabel()}
       </div>
-      <div ref={contentRef} className="ml-24 h-full relative">
+      <div 
+        ref={contentRef} 
+        className="ml-24 h-full relative"
+        onClick={() => selectClip(null)}
+      >
         {clips.map((clip) => (
           <TimelineClip
             key={clip.id}

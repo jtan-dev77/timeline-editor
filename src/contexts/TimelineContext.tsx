@@ -6,9 +6,12 @@ import { generateMediaId } from '../utils/fileUtils'
 
 interface TimelineContextType {
   tracks: TimelineClip[][]
+  selectedClip: TimelineClip | null
   addClipToTrack: (media: MediaFile, trackType: TrackType, startTime: number) => void
   removeClip: (clipId: string) => void
   updateClip: (clipId: string, updates: Partial<TimelineClip>) => void
+  selectClip: (clip: TimelineClip | null) => void
+  splitClip: (clipId: string, splitTime: number) => void
   isPlaying: boolean
   currentTime: number
   duration: number
@@ -22,6 +25,7 @@ const TimelineContext = createContext<TimelineContextType | undefined>(undefined
 
 export function TimelineProvider({ children }: { children: ReactNode }) {
   const [tracks, setTracks] = useState<TimelineClip[][]>([[], [], []])
+  const [selectedClip, setSelectedClip] = useState<TimelineClip | null>(null)
   const [isPlaying, setIsPlaying] = useState(false)
   const [currentTime, setCurrentTime] = useState(0)
   const [zoom, setZoom] = useState(1)
@@ -84,6 +88,16 @@ export function TimelineProvider({ children }: { children: ReactNode }) {
       startTime,
       endTime: startTime + duration,
       trackIndex,
+      opacity: 100,
+      audioLevel: 100,
+      textStyle: media.type === 'text' ? {
+        fontSize: 24,
+        color: '#FFFFFF',
+        fontFamily: 'Arial',
+        alignment: 'center',
+        bold: false,
+        italic: false,
+      } : undefined,
     }
 
     setTracks((prev) => {
@@ -102,10 +116,52 @@ export function TimelineProvider({ children }: { children: ReactNode }) {
   const updateClip = useCallback((clipId: string, updates: Partial<TimelineClip>) => {
     setTracks((prev) =>
       prev.map((track) =>
-        track.map((clip) =>
-          clip.id === clipId ? { ...clip, ...updates } : clip
-        )
+        track.map((clip) => {
+          if (clip.id === clipId) {
+            const updated = { ...clip, ...updates }
+            if (selectedClip?.id === clipId) {
+              setSelectedClip(updated)
+            }
+            return updated
+          }
+          return clip
+        })
       )
+    )
+  }, [selectedClip])
+
+  const selectClip = useCallback((clip: TimelineClip | null) => {
+    setSelectedClip(clip)
+  }, [])
+
+  const splitClip = useCallback((clipId: string, splitTime: number) => {
+    setTracks((prev) =>
+      prev.map((track) => {
+        const clipIndex = track.findIndex((clip) => clip.id === clipId)
+        if (clipIndex === -1) return track
+
+        const clip = track[clipIndex]
+        if (splitTime <= clip.startTime || splitTime >= clip.endTime) {
+          return track
+        }
+
+        const firstPart: TimelineClip = {
+          ...clip,
+          endTime: splitTime,
+        }
+
+        const secondPart: TimelineClip = {
+          ...clip,
+          id: generateMediaId(),
+          startTime: splitTime,
+        }
+
+        const newTrack = [...track]
+        newTrack[clipIndex] = firstPart
+        newTrack.splice(clipIndex + 1, 0, secondPart)
+
+        return newTrack
+      })
     )
   }, [])
 
@@ -113,9 +169,12 @@ export function TimelineProvider({ children }: { children: ReactNode }) {
     <TimelineContext.Provider
       value={{
         tracks,
+        selectedClip,
         addClipToTrack,
         removeClip,
         updateClip,
+        selectClip,
+        splitClip,
         isPlaying,
         currentTime,
         duration,
