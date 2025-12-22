@@ -1,6 +1,7 @@
 import { useState, useCallback, useEffect } from 'react'
 import type { MediaFile } from '../../types/media'
 import { getMediaType, generateMediaId } from '../../utils/fileUtils'
+import { getMediaDuration } from '../../utils/mediaDuration'
 import UploadArea from './UploadArea'
 import MediaItem from '../MediaPanel/MediaItem'
 
@@ -18,25 +19,31 @@ export default function AudioPanel() {
     }
   }, [mediaFiles])
 
-  const handleFilesSelected = useCallback((files: File[]) => {
-    const newMediaFiles: MediaFile[] = files.map((file) => {
-      const mediaType = getMediaType(file)
-      if (mediaType !== 'audio') return null
+  const handleFilesSelected = useCallback(async (files: File[]) => {
+    const newMediaFiles = await Promise.all(
+      files.map(async (file) => {
+        const mediaType = getMediaType(file)
+        if (mediaType !== 'audio') return null
 
-      const url = URL.createObjectURL(file)
-      const mediaFile: MediaFile = {
-        id: generateMediaId(),
-        name: file.name,
-        type: 'audio',
-        file,
-        url,
-        size: file.size,
-      }
+        const url = URL.createObjectURL(file)
+        const duration = await getMediaDuration(file, 'audio')
+        
+        const mediaFile: MediaFile = {
+          id: generateMediaId(),
+          name: file.name,
+          type: 'audio',
+          file,
+          url,
+          size: file.size,
+          duration,
+        }
 
-      return mediaFile
-    }).filter((media): media is MediaFile => media !== null)
+        return mediaFile
+      })
+    )
 
-    setMediaFiles((prev) => [...prev, ...newMediaFiles])
+    const validFiles = newMediaFiles.filter((media): media is MediaFile => media !== null)
+    setMediaFiles((prev) => [...prev, ...validFiles])
   }, [])
 
   const handleMediaSelect = (media: MediaFile) => {

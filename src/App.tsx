@@ -1,3 +1,4 @@
+import { TimelineProvider } from './contexts/TimelineContext'
 import Header from './components/Layout/Header'
 import Sidebar from './components/Layout/Sidebar'
 import PreviewArea from './components/Layout/PreviewArea'
@@ -6,15 +7,17 @@ import Timeline from './components/Layout/Timeline'
 
 function App() {
   return (
-    <div className="h-screen flex flex-col bg-gray-50 dark:bg-gray-900">
-      <Header />
-      <div className="flex-1 flex overflow-hidden">
-        <Sidebar />
-        <PreviewArea />
-        <PropertiesPanel />
+    <TimelineProvider>
+      <div className="h-screen flex flex-col bg-gray-50 dark:bg-gray-900">
+        <Header />
+        <div className="flex-1 flex overflow-hidden">
+          <Sidebar />
+          <PreviewArea />
+          <PropertiesPanel />
+        </div>
+        <Timeline />
       </div>
-      <Timeline />
-    </div>
+    </TimelineProvider>
   )
 }
 
