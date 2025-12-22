@@ -36,10 +36,13 @@ export default function PreviewArea() {
     if (videoRef.current && activeVideoClip) {
       const video = videoRef.current
       const targetTime = activeVideoClip.offset
+      const speed = activeVideoClip.clip.speed ?? 1
 
       if (Math.abs(video.currentTime - targetTime) > 0.05) {
         video.currentTime = targetTime
       }
+
+      video.playbackRate = speed
 
       if (isPlaying) {
         const playPromise = video.play()
@@ -53,16 +56,19 @@ export default function PreviewArea() {
       videoRef.current.pause()
       videoRef.current.currentTime = 0
     }
-  }, [activeVideoClip, isPlaying])
+  }, [activeVideoClip, isPlaying, activeVideoClip?.clip.speed])
 
   useEffect(() => {
     if (audioRef.current && activeAudioClip) {
       const audio = audioRef.current
       const targetTime = activeAudioClip.offset
+      const speed = activeAudioClip.clip.speed ?? 1
 
       if (Math.abs(audio.currentTime - targetTime) > 0.05) {
         audio.currentTime = targetTime
       }
+
+      audio.playbackRate = speed
 
       if (isPlaying) {
         const playPromise = audio.play()
@@ -76,7 +82,7 @@ export default function PreviewArea() {
       audioRef.current.pause()
       audioRef.current.currentTime = 0
     }
-  }, [activeAudioClip, isPlaying])
+  }, [activeAudioClip, isPlaying, activeAudioClip?.clip.speed])
 
   useEffect(() => {
     if (audioRef.current && activeAudioClip) {
@@ -84,6 +90,20 @@ export default function PreviewArea() {
       audioRef.current.volume = audioLevel / 100
     }
   }, [activeAudioClip])
+
+  useEffect(() => {
+    if (videoRef.current && activeVideoClip) {
+      const speed = activeVideoClip.clip.speed ?? 1
+      videoRef.current.playbackRate = speed
+    }
+  }, [activeVideoClip?.clip.speed, activeVideoClip])
+
+  useEffect(() => {
+    if (audioRef.current && activeAudioClip) {
+      const speed = activeAudioClip.clip.speed ?? 1
+      audioRef.current.playbackRate = speed
+    }
+  }, [activeAudioClip?.clip.speed, activeAudioClip])
 
   const hasMedia = activeVideoClip || activeAudioClip || activeTextClips.length > 0
 

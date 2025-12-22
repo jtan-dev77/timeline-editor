@@ -92,6 +92,7 @@ export default function TimelineTrack({ type, clips, pixelsPerSecond }: Timeline
       onDragOver={handleDragOver}
       onDragLeave={handleDragLeave}
       onDrop={handleDrop}
+      onClick={(e) => e.stopPropagation()}
     >
       <div className="absolute left-0 top-0 bottom-0 w-24 bg-gray-100 dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 flex items-center justify-center text-xs font-medium text-gray-700 dark:text-gray-300 z-10">
         {getTrackLabel()}

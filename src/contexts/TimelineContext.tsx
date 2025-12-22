@@ -90,6 +90,8 @@ export function TimelineProvider({ children }: { children: ReactNode }) {
       trackIndex,
       opacity: 100,
       audioLevel: 100,
+      speed: 1,
+      blendMode: 'normal',
       textStyle: media.type === 'text' ? {
         fontSize: 24,
         color: '#FFFFFF',

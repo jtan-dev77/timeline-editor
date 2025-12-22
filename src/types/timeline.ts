@@ -9,6 +9,8 @@ export interface TimelineClip {
   trackIndex: number
   opacity?: number
   audioLevel?: number
+  speed?: number
+  blendMode?: 'normal' | 'multiply' | 'screen' | 'overlay' | 'darken' | 'lighten' | 'color-dodge' | 'color-burn' | 'hard-light' | 'soft-light' | 'difference' | 'exclusion'
   textStyle?: {
     fontSize?: number
     color?: string
