@@ -1,7 +1,19 @@
+import Header from './components/Layout/Header'
+import Sidebar from './components/Layout/Sidebar'
+import PreviewArea from './components/Layout/PreviewArea'
+import PropertiesPanel from './components/Layout/PropertiesPanel'
+import Timeline from './components/Layout/Timeline'
+
 function App() {
   return (
-    <div className="min-h-screen bg-gray-900 text-white">
-      <h1 className="text-2xl font-bold p-4">Timeline Editor</h1>
+    <div className="h-screen flex flex-col bg-gray-50 dark:bg-gray-900">
+      <Header />
+      <div className="flex-1 flex overflow-hidden">
+        <Sidebar />
+        <PreviewArea />
+        <PropertiesPanel />
+      </div>
+      <Timeline />
     </div>
   )
 }
