@@ -8,51 +8,68 @@ export async function generateAudioWaveform(
   samples: number = 200
 ): Promise<WaveformData> {
   return new Promise((resolve, reject) => {
-    const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)()
-    const fileReader = new FileReader()
+    try {
+      const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)()
+      const fileReader = new FileReader()
 
-    fileReader.onload = async (e) => {
-      try {
-        const arrayBuffer = e.target?.result as ArrayBuffer
-        const audioBuffer = await audioContext.decodeAudioData(arrayBuffer)
-        
-        const rawData = audioBuffer.getChannelData(0)
-        const blockSize = Math.floor(rawData.length / samples)
-        const peaks: number[] = []
-
-        for (let i = 0; i < samples; i++) {
-          const start = blockSize * i
-          let sum = 0
-          let max = 0
-          let min = 0
-
-          for (let j = 0; j < blockSize; j++) {
-            const sample = rawData[start + j]
-            sum += Math.abs(sample)
-            max = Math.max(max, sample)
-            min = Math.min(min, sample)
+      fileReader.onload = async (e) => {
+        try {
+          const arrayBuffer = e.target?.result as ArrayBuffer
+          if (!arrayBuffer) {
+            throw new Error('Failed to read file as ArrayBuffer')
           }
 
-          const peak = Math.max(Math.abs(max), Math.abs(min))
-          peaks.push(peak)
+          const audioBuffer = await audioContext.decodeAudioData(arrayBuffer.slice(0))
+          
+          if (!audioBuffer || audioBuffer.length === 0) {
+            throw new Error('Invalid audio buffer')
+          }
+
+          const rawData = audioBuffer.getChannelData(0)
+          if (!rawData || rawData.length === 0) {
+            throw new Error('No audio data in channel')
+          }
+
+          const blockSize = Math.max(1, Math.floor(rawData.length / samples))
+          const peaks: number[] = []
+
+          for (let i = 0; i < samples; i++) {
+            const start = blockSize * i
+            let max = 0
+            let min = 0
+
+            for (let j = 0; j < blockSize && (start + j) < rawData.length; j++) {
+              const sample = rawData[start + j]
+              max = Math.max(max, sample)
+              min = Math.min(min, sample)
+            }
+
+            const peak = Math.max(Math.abs(max), Math.abs(min))
+            peaks.push(peak)
+          }
+
+          resolve({
+            peaks,
+            duration: audioBuffer.duration,
+          })
+        } catch (error) {
+          console.error('Error generating waveform:', error)
+          reject(error)
+        } finally {
+          audioContext.close().catch(() => {})
         }
-
-        resolve({
-          peaks,
-          duration: audioBuffer.duration,
-        })
-      } catch (error) {
-        reject(error)
-      } finally {
-        audioContext.close()
       }
-    }
 
-    fileReader.onerror = () => {
-      reject(new Error('Failed to read audio file'))
-    }
+      fileReader.onerror = (error) => {
+        console.error('FileReader error:', error)
+        reject(new Error('Failed to read audio file'))
+      }
 
-    fileReader.readAsArrayBuffer(audioFile)
+      fileReader.readAsArrayBuffer(audioFile)
+    } catch (error) {
+      console.error('Error creating AudioContext:', error)
+      reject(error)
+    }
   })
 }
 

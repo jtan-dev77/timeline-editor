@@ -44,12 +44,17 @@ The production build will be available in the `dist` directory.
 ## Main Features
 
 ### Media Management
-- **Video Upload**: Support for MP4 and MOV formats
-- **Audio Upload**: Support for MP3, WAV, and M4A formats
+- **Video Upload**: Support for MP4 and MOV formats with automatic thumbnail generation
+- **Audio Upload**: Support for MP3, WAV, and M4A formats with automatic waveform generation
 - **Text Overlays**: Add customizable text elements to your timeline
+- **Video Thumbnails**: Automatic thumbnail generation for video clips displayed in timeline
+- **Audio Waveforms**: Automatic waveform visualization for audio clips in timeline
 
 ### Timeline Editing
 - **Multi-track Timeline**: Separate tracks for video, audio, and text
+- **Visual Feedback**: 
+  - Video clips display thumbnails when wide enough
+  - Audio clips display waveform visualization
 - **Clip Manipulation**: 
   - Drag clips to reposition on timeline
   - Resize clips by dragging handles
@@ -58,9 +63,13 @@ The production build will be available in the `dist` directory.
 - **Zoom Controls**: Logarithmic zoom slider for precise timeline navigation
 
 ### Playback Controls
-- **Play/Pause**: Control playback with timeline controls
+- **Play/Pause**: Control playback with timeline controls or Spacebar keyboard shortcut
 - **Seeking**: Click on timeline to jump to specific time
-- **Frame Navigation**: Skip forward/backward by 5 seconds
+- **Frame Navigation**: Skip forward/backward by 5 seconds using buttons or arrow keys
+- **Keyboard Shortcuts**: 
+  - `Space` - Play/Pause
+  - `←` (Left Arrow) - Move backward 5 seconds
+  - `→` (Right Arrow) - Move forward 5 seconds
 
 ### Clip Properties
 - **Speed Control**: Adjust playback speed (0.1x to 16x) with logarithmic slider
@@ -82,14 +91,14 @@ The production build will be available in the `dist` directory.
 ### Core Functionality
 - **Export Functionality**: Add ability to export edited videos
 - **Undo/Redo**: Implement history management for editing operations
-- **Keyboard Shortcuts**: Add keyboard shortcuts for common actions (space for play/pause, etc.)
 - **Timeline Scrubbing**: Improve timeline interaction for smoother seeking
+- **Additional Keyboard Shortcuts**: Add more shortcuts (e.g., Delete key for removing clips, S for split)
 
 ### Media Features
-- **Video Thumbnails**: Generate and display thumbnails for video clips
-- **Audio Waveform Visualization**: Show audio waveforms in timeline
 - **Image Support**: Full implementation of image overlay functionality
 - **More Format Support**: Expand supported video/audio formats
+- **Multiple Thumbnails**: Generate multiple thumbnails across video duration for better timeline preview
+- **Waveform Customization**: Allow users to customize waveform colors and styles
 
 ### Editing Capabilities
 - **Transitions**: Add fade, crossfade, and other transition effects
@@ -99,13 +108,17 @@ The production build will be available in the `dist` directory.
 
 ### User Experience
 - **Project Save/Load**: Save and load project files
-- **Performance Optimization**: Better handling of large video files
+- **Performance Optimization**: Better handling of large video files and waveform generation for long audio files
+- **Thumbnail Caching**: Cache generated thumbnails to improve performance on repeated uploads
 - **Error Handling**: More robust error messages and recovery
 - **Responsive Design**: Improve mobile/tablet support
 - **Accessibility**: Enhanced keyboard navigation and screen reader support
+- **Keyboard Shortcuts Help**: Add a help modal showing all available keyboard shortcuts
 
 ### Technical Improvements
 - **State Management**: Consider Redux or Zustand for complex state
 - **Video Processing**: Client-side video processing library integration
-- **Caching**: Implement better caching for media files
+- **Caching**: Implement better caching for media files, thumbnails, and waveforms
+- **Web Workers**: Move waveform and thumbnail generation to Web Workers for better performance
 - **Testing**: Add unit and integration tests
+- **Audio Context Management**: Optimize AudioContext usage for waveform generation

@@ -17,9 +17,10 @@ export default function Waveform({
     return null
   }
 
-  const barWidth = width / peaks.length
-  const maxBarHeight = height * 0.8
+  const barWidth = Math.max(1, width / peaks.length)
+  const maxBarHeight = height * 0.9
   const centerY = height / 2
+  const minBarHeight = 1
 
   return (
     <svg
@@ -30,7 +31,7 @@ export default function Waveform({
     >
       <rect width={width} height={height} fill={backgroundColor} />
       {peaks.map((peak, index) => {
-        const barHeight = peak * maxBarHeight
+        const barHeight = Math.max(minBarHeight, peak * maxBarHeight)
         const x = index * barWidth
         const y = centerY - barHeight / 2
 
@@ -39,10 +40,10 @@ export default function Waveform({
             key={index}
             x={x}
             y={y}
-            width={Math.max(1, barWidth - 0.5)}
+            width={Math.max(0.5, barWidth * 0.8)}
             height={barHeight}
             fill={color}
-            opacity={0.8}
+            opacity={0.9}
           />
         )
       })}

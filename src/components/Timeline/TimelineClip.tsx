@@ -154,11 +154,11 @@ export default function TimelineClip({ clip, pixelsPerSecond }: TimelineClipProp
         <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent" />
       )}
       {hasWaveform && width >= minWidthForWaveform && (
-        <div className="absolute inset-0 flex items-center justify-center">
+        <div className="absolute inset-0 flex items-center justify-center z-0" style={{ padding: '2px' }}>
           <Waveform
             peaks={clip.media.waveform!}
-            width={Math.max(width - 4, 56)}
-            height={Math.max(20, 24)}
+            width={Math.max(width - 8, 52)}
+            height={Math.max(16, 20)}
             color={isSelected ? '#fbbf24' : '#10b981'}
             backgroundColor="transparent"
           />
@@ -178,7 +178,9 @@ export default function TimelineClip({ clip, pixelsPerSecond }: TimelineClipProp
           />
         </>
       )}
-      <span className="truncate z-10 relative">{clip.media.name}</span>
+      <span className="truncate z-10 relative" style={{ textShadow: hasWaveform ? '0 1px 2px rgba(0,0,0,0.8)' : undefined }}>
+        {clip.media.name}
+      </span>
     </div>
   )
 }

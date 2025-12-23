@@ -26,6 +26,7 @@ export default function MediaItem({ media, onSelect }: MediaItemProps) {
       duration: media.duration,
       size: media.size,
       content: media.content,
+      waveform: media.waveform,
     }
     e.dataTransfer.setData('application/json', JSON.stringify(serializableMedia))
     if (dragRef.current) {
