@@ -135,7 +135,6 @@ export default function TimelineClip({ clip, pixelsPerSecond }: TimelineClipProp
         left: `${left}px`,
         width: `${Math.max(width, 60)}px`,
         zIndex: isSelected ? 10 : 1,
-        opacity: (clip.opacity ?? 100) / 100,
       }}
       onClick={handleClipClick}
       onMouseDown={handleClipMouseDown}

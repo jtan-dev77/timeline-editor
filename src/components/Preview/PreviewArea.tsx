@@ -293,7 +293,7 @@ export default function PreviewArea() {
             <video
               ref={videoRef}
               src={activeVideoClip.clip.media.url}
-              className="max-w-full max-h-full"
+              className="w-full h-full object-contain"
               style={{
                 opacity: (activeVideoClip.clip.opacity ?? 100) / 100,
               }}

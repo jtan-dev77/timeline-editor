@@ -161,8 +161,16 @@ export default function TimelineControls() {
       </div>
 
       <div className="flex items-center gap-2 min-w-[200px]">
-        <svg className="w-5 h-5 text-gray-300 dark:text-gray-300" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607zM13.5 10.5h-6" />
+        <svg 
+          className="w-5 h-5 text-gray-400 hover:text-gray-300 cursor-pointer transition-colors" 
+          fill="none" 
+          stroke="currentColor" 
+          strokeWidth={2} 
+          viewBox="0 0 24 24"
+          onClick={() => setZoom(Math.max(0.1, zoom - 0.5))}
+        >
+          <circle cx="11" cy="11" r="7" />
+          <path strokeLinecap="round" d="M21 21l-4.35-4.35M8 11h6" />
         </svg>
         <input
           type="range"
@@ -171,11 +179,18 @@ export default function TimelineControls() {
           step="0.1"
           value={zoom}
           onChange={handleZoomChange}
-          className="flex-1 h-0.5 bg-gray-300 dark:bg-gray-600 rounded-lg appearance-none cursor-pointer accent-blue-600"
+          className="flex-1 h-1 bg-gray-600 rounded-lg appearance-none cursor-pointer accent-blue-500"
         />
-        <svg className="w-5 h-5 text-gray-300 dark:text-gray-300" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
-          <path strokeLinecap="round" strokeLinejoin="round" d="M15 10.5h-3m3 0h3m-3-3v3m0-3v3" />
+        <svg 
+          className="w-5 h-5 text-gray-400 hover:text-gray-300 cursor-pointer transition-colors" 
+          fill="none" 
+          stroke="currentColor" 
+          strokeWidth={2} 
+          viewBox="0 0 24 24"
+          onClick={() => setZoom(Math.min(5, zoom + 0.5))}
+        >
+          <circle cx="11" cy="11" r="7" />
+          <path strokeLinecap="round" d="M21 21l-4.35-4.35M8 11h6M11 8v6" />
         </svg>
       </div>
     </div>
