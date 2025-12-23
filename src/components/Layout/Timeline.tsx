@@ -73,8 +73,8 @@ export default function Timeline() {
 
   return (
     <div className="flex flex-col bg-gray-100 dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700">
-      <div className="h-48 overflow-x-auto overflow-y-hidden">
-        <div className="relative h-full min-h-[192px]">
+      <div className="h-64 overflow-x-auto overflow-y-auto">
+        <div className="relative h-full min-h-[256px]">
           <div className="absolute top-0 left-0 right-0 h-8 bg-gray-200 dark:bg-gray-800 border-b border-gray-300 dark:border-gray-700 ml-24" style={{ minWidth: `${maxTime * pixelsPerSecond}px` }}>
             {timeMarkers.map((time, index) => {
               const position = time * pixelsPerSecond

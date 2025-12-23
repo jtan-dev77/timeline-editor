@@ -13,6 +13,7 @@ export default function TimelineClip({ clip, pixelsPerSecond }: TimelineClipProp
   const leftHandleRef = useRef<HTMLDivElement>(null)
   const rightHandleRef = useRef<HTMLDivElement>(null)
   const [, setIsResizing] = useState<'left' | 'right' | null>(null)
+  const [isDragging, setIsDragging] = useState(false)
 
   const width = (clip.endTime - clip.startTime) * pixelsPerSecond
   const left = clip.startTime * pixelsPerSecond
@@ -33,7 +34,44 @@ export default function TimelineClip({ clip, pixelsPerSecond }: TimelineClipProp
 
   const handleClipClick = (e: React.MouseEvent) => {
     e.stopPropagation()
+    if (!isDragging) {
+      selectClip(clip)
+    }
+  }
+
+  const handleClipMouseDown = (e: React.MouseEvent) => {
+    if (e.target === leftHandleRef.current || e.target === rightHandleRef.current) {
+      return
+    }
+    
+    e.stopPropagation()
+    setIsDragging(true)
     selectClip(clip)
+
+    const startX = e.clientX
+    const startTime = clip.startTime
+    const clipDuration = clip.endTime - clip.startTime
+
+    const handleMouseMove = (moveEvent: MouseEvent) => {
+      const deltaX = moveEvent.clientX - startX
+      const deltaTime = deltaX / pixelsPerSecond
+      const newStartTime = Math.max(0, startTime + deltaTime)
+      const newEndTime = newStartTime + clipDuration
+
+      updateClip(clip.id, {
+        startTime: newStartTime,
+        endTime: newEndTime,
+      })
+    }
+
+    const handleMouseUp = () => {
+      setIsDragging(false)
+      document.removeEventListener('mousemove', handleMouseMove)
+      document.removeEventListener('mouseup', handleMouseUp)
+    }
+
+    document.addEventListener('mousemove', handleMouseMove)
+    document.addEventListener('mouseup', handleMouseUp)
   }
 
   const handleResizeStart = (e: React.MouseEvent, side: 'left' | 'right') => {
@@ -45,6 +83,9 @@ export default function TimelineClip({ clip, pixelsPerSecond }: TimelineClipProp
     const startTime = side === 'left' ? clip.startTime : clip.endTime
     const startPixels = startTime * pixelsPerSecond
 
+    const originalDuration = clip.originalDuration ?? (clip.media.duration ?? (clip.endTime - clip.startTime))
+    const isVideoOrAudio = clip.media.type === 'video' || clip.media.type === 'audio'
+
     const handleMouseMove = (moveEvent: MouseEvent) => {
       const deltaX = moveEvent.clientX - startX
       const deltaTime = deltaX / pixelsPerSecond
@@ -53,11 +94,23 @@ export default function TimelineClip({ clip, pixelsPerSecond }: TimelineClipProp
       if (side === 'left') {
         const minTime = 0
         const maxTime = clip.endTime - 0.1
-        const clampedTime = Math.max(minTime, Math.min(newTime, maxTime))
+        let clampedTime = Math.max(minTime, Math.min(newTime, maxTime))
+        
+        if (isVideoOrAudio) {
+          const maxStartTime = clip.endTime - originalDuration
+          clampedTime = Math.max(0, Math.min(clampedTime, maxStartTime))
+        }
+        
         updateClip(clip.id, { startTime: clampedTime })
       } else {
         const minTime = clip.startTime + 0.1
-        const clampedTime = Math.max(minTime, newTime)
+        let clampedTime = Math.max(minTime, newTime)
+        
+        if (isVideoOrAudio) {
+          const maxEndTime = clip.startTime + originalDuration
+          clampedTime = Math.min(clampedTime, maxEndTime)
+        }
+        
         updateClip(clip.id, { endTime: clampedTime })
       }
     }
@@ -75,7 +128,7 @@ export default function TimelineClip({ clip, pixelsPerSecond }: TimelineClipProp
   return (
     <div
       ref={clipRef}
-      className={`absolute h-full ${getClipColor()} rounded cursor-pointer transition-colors flex items-center px-2 text-white text-xs font-medium shadow-md border-2 ${
+      className={`absolute h-full ${getClipColor()} rounded cursor-move transition-colors flex items-center px-2 text-white text-xs font-medium shadow-md border-2 ${
         isSelected ? 'border-yellow-400' : 'border-white/20'
       }`}
       style={{
@@ -85,6 +138,7 @@ export default function TimelineClip({ clip, pixelsPerSecond }: TimelineClipProp
         opacity: (clip.opacity ?? 100) / 100,
       }}
       onClick={handleClipClick}
+      onMouseDown={handleClipMouseDown}
       title={clip.media.name}
     >
       {isSelected && (

@@ -55,8 +55,42 @@ export default function TimelineControls() {
     }
   }
 
+  const handleMute = () => {
+    if (selectedClip) {
+      const isMuted = selectedClip.muted ?? false
+      updateClip(selectedClip.id, { muted: !isMuted })
+    }
+  }
+
+  const canMute = selectedClip && (selectedClip.media.type === 'video' || selectedClip.media.type === 'audio')
+  const isMuted = selectedClip?.muted ?? false
+
   return (
     <div className="h-16 bg-gray-200 dark:bg-gray-800 border-t border-gray-300 dark:border-gray-700 flex items-center gap-4 px-4">
+
+      {canMute && (
+        <button
+          onClick={handleMute}
+          className={`p-2 rounded-lg transition-colors ${
+            isMuted 
+              ? 'bg-red-600 hover:bg-red-700 text-white' 
+              : 'bg-gray-600 hover:bg-gray-700 text-white'
+          }`}
+          aria-label={isMuted ? 'Unmute' : 'Mute'}
+          title={isMuted ? 'Unmute clip' : 'Mute clip'}
+        >
+          {isMuted ? (
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2M17 10l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2" />
+            </svg>
+          ) : (
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />
+            </svg>
+          )}
+        </button>
+      )}
 
       <button
         onClick={handleTrim}
@@ -163,8 +197,7 @@ export default function TimelineControls() {
         />
         <svg className="w-5 h-5 text-gray-300 dark:text-gray-300" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
-          <line x1="16.5" y1="10.5" x2="13.5" y2="10.5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-          <line x1="15" y1="9" x2="15" y2="12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+          <path strokeLinecap="round" strokeLinejoin="round" d="M15 10.5h-3m3 0h3m-3-3v3m0-3v3" />
         </svg>
       </div>
     </div>

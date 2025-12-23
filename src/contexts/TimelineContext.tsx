@@ -81,31 +81,40 @@ export function TimelineProvider({ children }: { children: ReactNode }) {
     
     const duration = media.duration && media.duration > 0 ? media.duration : 10
     
-    const newClip: TimelineClip = {
-      id: generateMediaId(),
-      mediaId: media.id,
-      media,
-      startTime,
-      endTime: startTime + duration,
-      trackIndex,
-      originalDuration: duration,
-      opacity: 100,
-      audioLevel: 100,
-      speed: 1,
-      blendMode: 'normal',
-      textStyle: media.type === 'text' ? {
-        fontSize: 24,
-        color: '#FFFFFF',
-        fontFamily: 'Arial',
-        alignment: 'center',
-        bold: false,
-        italic: false,
-      } : undefined,
-    }
-
     setTracks((prev) => {
       const newTracks = [...prev]
-      newTracks[trackIndex] = [...newTracks[trackIndex], newClip]
+      const currentTrack = newTracks[trackIndex] || []
+      
+      let calculatedStartTime = startTime
+      if (currentTrack.length > 0 && (trackType === 'video' || trackType === 'audio')) {
+        const lastClip = currentTrack[currentTrack.length - 1]
+        calculatedStartTime = lastClip.endTime
+      }
+    
+      const newClip: TimelineClip = {
+        id: generateMediaId(),
+        mediaId: media.id,
+        media,
+        startTime: calculatedStartTime,
+        endTime: calculatedStartTime + duration,
+        trackIndex,
+        originalDuration: duration,
+        opacity: 100,
+        audioLevel: 100,
+        speed: 1,
+        muted: false,
+        blendMode: 'normal',
+        textStyle: media.type === 'text' ? {
+          fontSize: 24,
+          color: '#FFFFFF',
+          fontFamily: 'Arial',
+          alignment: 'middle-center',
+          bold: false,
+          italic: false,
+        } : undefined,
+      }
+
+      newTracks[trackIndex] = [...currentTrack, newClip]
       return newTracks
     })
   }, [])

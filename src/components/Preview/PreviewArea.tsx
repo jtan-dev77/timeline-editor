@@ -45,12 +45,14 @@ export default function PreviewArea() {
       const video = videoRef.current
       const targetTime = activeVideoClip.offset
       const speed = activeVideoClip.clip.speed ?? 1
+      const isMuted = activeVideoClip.clip.muted ?? false
 
       if (Math.abs(video.currentTime - targetTime) > 0.05) {
         video.currentTime = targetTime
       }
 
       video.playbackRate = speed
+      video.muted = isMuted
 
       if (isPlaying) {
         const playPromise = video.play()
@@ -64,19 +66,21 @@ export default function PreviewArea() {
       videoRef.current.pause()
       videoRef.current.currentTime = 0
     }
-  }, [activeVideoClip, isPlaying, activeVideoClip?.clip.speed])
+  }, [activeVideoClip, isPlaying, activeVideoClip?.clip.speed, activeVideoClip?.clip.muted])
 
   useEffect(() => {
     if (audioRef.current && activeAudioClip) {
       const audio = audioRef.current
       const targetTime = activeAudioClip.offset
       const speed = activeAudioClip.clip.speed ?? 1
+      const isMuted = activeAudioClip.clip.muted ?? false
 
       if (Math.abs(audio.currentTime - targetTime) > 0.05) {
         audio.currentTime = targetTime
       }
 
       audio.playbackRate = speed
+      audio.muted = isMuted
 
       if (isPlaying) {
         const playPromise = audio.play()
@@ -90,7 +94,7 @@ export default function PreviewArea() {
       audioRef.current.pause()
       audioRef.current.currentTime = 0
     }
-  }, [activeAudioClip, isPlaying, activeAudioClip?.clip.speed])
+  }, [activeAudioClip, isPlaying, activeAudioClip?.clip.speed, activeAudioClip?.clip.muted])
 
   useEffect(() => {
     if (audioRef.current && activeAudioClip) {
@@ -127,7 +131,9 @@ export default function PreviewArea() {
               style={{
                 opacity: (activeVideoClip.clip.opacity ?? 100) / 100,
               }}
-              muted={false}
+              preload="auto"
+              playsInline
+              crossOrigin="anonymous"
             />
           )}
           {activeAudioClip && !activeVideoClip && (
@@ -142,31 +148,78 @@ export default function PreviewArea() {
               <p className="text-gray-400">{activeAudioClip.clip.media.name}</p>
             </div>
           )}
-          <audio ref={audioRef} src={activeAudioClip?.clip.media.url} />
+          <audio 
+            ref={audioRef} 
+            src={activeAudioClip?.clip.media.url}
+            preload="auto"
+            crossOrigin="anonymous"
+          />
           {activeTextClips.map((textClip) => {
             const style = textClip.textStyle || {
               fontSize: 24,
               color: '#FFFFFF',
               fontFamily: 'Arial',
-              alignment: 'center',
+              alignment: 'middle-center',
               bold: false,
               italic: false,
             }
+            
+            const getAlignmentStyles = () => {
+              const alignment = style.alignment || 'middle-center'
+              const styles: React.CSSProperties = {
+                position: 'absolute',
+                pointerEvents: 'none',
+                padding: '20px',
+              }
+              
+              if (alignment === 'top-left') {
+                styles.top = '0'
+                styles.left = '0'
+              } else if (alignment === 'top-center') {
+                styles.top = '0'
+                styles.left = '50%'
+                styles.transform = 'translateX(-50%)'
+              } else if (alignment === 'top-right') {
+                styles.top = '0'
+                styles.right = '0'
+              } else if (alignment === 'middle-left') {
+                styles.top = '50%'
+                styles.left = '0'
+                styles.transform = 'translateY(-50%)'
+              } else if (alignment === 'middle-center') {
+                styles.top = '50%'
+                styles.left = '50%'
+                styles.transform = 'translate(-50%, -50%)'
+              } else if (alignment === 'middle-right') {
+                styles.top = '50%'
+                styles.right = '0'
+                styles.transform = 'translateY(-50%)'
+              } else if (alignment === 'bottom-left') {
+                styles.bottom = '0'
+                styles.left = '0'
+              } else if (alignment === 'bottom-center') {
+                styles.bottom = '0'
+                styles.left = '50%'
+                styles.transform = 'translateX(-50%)'
+              } else if (alignment === 'bottom-right') {
+                styles.bottom = '0'
+                styles.right = '0'
+              }
+              
+              return styles
+            }
+            
             return (
               <div
                 key={textClip.id}
-                className="absolute"
                 style={{
-                  fontSize: `${style.fontSize}px`,
-                  color: style.color,
-                  fontFamily: style.fontFamily,
-                  textAlign: style.alignment,
+                  ...getAlignmentStyles(),
+                  fontSize: `${style.fontSize || 24}px`,
+                  color: style.color || '#FFFFFF',
+                  fontFamily: style.fontFamily || 'Arial',
                   fontWeight: style.bold ? 'bold' : 'normal',
                   fontStyle: style.italic ? 'italic' : 'normal',
                   opacity: (textClip.opacity ?? 100) / 100,
-                  width: '100%',
-                  padding: '20px',
-                  pointerEvents: 'none',
                 }}
               >
                 {textClip.media.content || 'Enter your text here'}

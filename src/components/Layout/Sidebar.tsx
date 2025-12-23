@@ -43,10 +43,16 @@ export default function Sidebar() {
         </button>
       </div>
 
-      <div className="flex-1 overflow-hidden">
-        {activeTab === 'video' && <VideoPanel />}
-        {activeTab === 'audio' && <AudioPanel />}
-        {activeTab === 'text' && <TextPanel />}
+      <div className="flex-1 overflow-hidden relative">
+        <div className={`absolute inset-0 ${activeTab === 'video' ? 'block' : 'hidden'}`}>
+          <VideoPanel />
+        </div>
+        <div className={`absolute inset-0 ${activeTab === 'audio' ? 'block' : 'hidden'}`}>
+          <AudioPanel />
+        </div>
+        <div className={`absolute inset-0 ${activeTab === 'text' ? 'block' : 'hidden'}`}>
+          <TextPanel />
+        </div>
       </div>
     </div>
   )

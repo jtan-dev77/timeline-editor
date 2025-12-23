@@ -11,12 +11,13 @@ export interface TimelineClip {
   opacity?: number
   audioLevel?: number
   speed?: number
+  muted?: boolean
   blendMode?: 'normal' | 'multiply' | 'screen' | 'overlay' | 'darken' | 'lighten' | 'color-dodge' | 'color-burn' | 'hard-light' | 'soft-light' | 'difference' | 'exclusion'
   textStyle?: {
     fontSize?: number
     color?: string
     fontFamily?: string
-    alignment?: 'left' | 'center' | 'right'
+    alignment?: 'top-left' | 'top-center' | 'top-right' | 'middle-left' | 'middle-center' | 'middle-right' | 'bottom-left' | 'bottom-center' | 'bottom-right'
     bold?: boolean
     italic?: boolean
   }
