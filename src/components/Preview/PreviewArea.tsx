@@ -5,6 +5,9 @@ export default function PreviewArea() {
   const { tracks, currentTime, isPlaying } = useTimeline()
   const videoRef = useRef<HTMLVideoElement>(null)
   const audioRef = useRef<HTMLAudioElement>(null)
+  const prevAudioClipIdRef = useRef<string | null>(null)
+  const prevVideoClipIdRef = useRef<string | null>(null)
+  const prevIsPlayingRef = useRef(false)
 
   const activeClips = useMemo(() => {
     const videoTrack = tracks[0] || []
@@ -41,13 +44,21 @@ export default function PreviewArea() {
   const activeTextClips = activeClips.text
 
   useEffect(() => {
-    if (videoRef.current && activeVideoClip) {
-      const video = videoRef.current
+    const video = videoRef.current
+    if (!video) return
+
+    const currentClipId = activeVideoClip?.clip.id ?? null
+    const clipChanged = prevVideoClipIdRef.current !== currentClipId
+    const playbackJustStarted = isPlaying && !prevIsPlayingRef.current
+    prevVideoClipIdRef.current = currentClipId
+
+    if (activeVideoClip) {
       const targetTime = activeVideoClip.offset
       const speed = activeVideoClip.clip.speed ?? 1
       const isMuted = activeVideoClip.clip.muted ?? false
 
-      if (Math.abs(video.currentTime - targetTime) > 0.05) {
+      const needsSync = clipChanged || playbackJustStarted || (!isPlaying && Math.abs(video.currentTime - targetTime) > 0.1)
+      if (needsSync) {
         video.currentTime = targetTime
       }
 
@@ -62,20 +73,28 @@ export default function PreviewArea() {
       } else {
         video.pause()
       }
-    } else if (videoRef.current) {
-      videoRef.current.pause()
-      videoRef.current.currentTime = 0
+    } else {
+      video.pause()
+      video.currentTime = 0
     }
-  }, [activeVideoClip, isPlaying, activeVideoClip?.clip.speed, activeVideoClip?.clip.muted])
+  }, [activeVideoClip, isPlaying, activeVideoClip?.clip.speed, activeVideoClip?.clip.muted, activeVideoClip?.clip.id])
 
   useEffect(() => {
-    if (audioRef.current && activeAudioClip) {
-      const audio = audioRef.current
+    const audio = audioRef.current
+    if (!audio) return
+
+    const currentClipId = activeAudioClip?.clip.id ?? null
+    const clipChanged = prevAudioClipIdRef.current !== currentClipId
+    const playbackJustStarted = isPlaying && !prevIsPlayingRef.current
+    prevAudioClipIdRef.current = currentClipId
+
+    if (activeAudioClip) {
       const targetTime = activeAudioClip.offset
       const speed = activeAudioClip.clip.speed ?? 1
       const isMuted = activeAudioClip.clip.muted ?? false
 
-      if (Math.abs(audio.currentTime - targetTime) > 0.05) {
+      const needsSync = clipChanged || playbackJustStarted || (!isPlaying && Math.abs(audio.currentTime - targetTime) > 0.1)
+      if (needsSync) {
         audio.currentTime = targetTime
       }
 
@@ -90,11 +109,18 @@ export default function PreviewArea() {
       } else {
         audio.pause()
       }
-    } else if (audioRef.current) {
-      audioRef.current.pause()
-      audioRef.current.currentTime = 0
+    } else {
+      audio.pause()
+      audio.currentTime = 0
+      if (clipChanged) {
+        audio.src = ''
+      }
     }
-  }, [activeAudioClip, isPlaying, activeAudioClip?.clip.speed, activeAudioClip?.clip.muted])
+  }, [activeAudioClip, isPlaying, activeAudioClip?.clip.speed, activeAudioClip?.clip.muted, activeAudioClip?.clip.id])
+
+  useEffect(() => {
+    prevIsPlayingRef.current = isPlaying
+  }, [isPlaying])
 
   useEffect(() => {
     if (audioRef.current && activeAudioClip) {
@@ -102,6 +128,32 @@ export default function PreviewArea() {
       audioRef.current.volume = audioLevel / 100
     }
   }, [activeAudioClip])
+
+  useEffect(() => {
+    const audio = audioRef.current
+    if (!audio) return
+
+    if (!activeAudioClip && !audio.paused) {
+      audio.pause()
+      audio.currentTime = 0
+    }
+  }, [currentTime, activeAudioClip])
+
+  useEffect(() => {
+    if (audioRef.current && activeAudioClip) {
+      const audio = audioRef.current
+      const newSrc = activeAudioClip.clip.media.url
+      
+      const currentSrc = audio.getAttribute('src') || audio.src
+      if (currentSrc !== newSrc && newSrc) {
+        audio.src = newSrc
+        audio.load()
+      }
+    } else if (audioRef.current && !activeAudioClip) {
+      audioRef.current.src = ''
+      audioRef.current.load()
+    }
+  }, [activeAudioClip?.clip.media.url, activeAudioClip])
 
   useEffect(() => {
     if (videoRef.current && activeVideoClip) {
@@ -149,10 +201,15 @@ export default function PreviewArea() {
             </div>
           )}
           <audio 
-            ref={audioRef} 
+            ref={audioRef}
             src={activeAudioClip?.clip.media.url}
             preload="auto"
-            crossOrigin="anonymous"
+            onEnded={() => {
+              if (audioRef.current) {
+                audioRef.current.pause()
+                audioRef.current.currentTime = 0
+              }
+            }}
           />
           {activeTextClips.map((textClip) => {
             const style = textClip.textStyle || {

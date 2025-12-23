@@ -85,8 +85,21 @@ export default function PropertiesPanel() {
         }
       }
 
+  const speedToSliderPosition = (speed: number): number => {
+    const minSpeed = 0.1
+    const maxSpeed = 16
+    return (Math.log(speed / minSpeed) / Math.log(maxSpeed / minSpeed)) * 100
+  }
+
+  const sliderPositionToSpeed = (position: number): number => {
+    const minSpeed = 0.1
+    const maxSpeed = 16
+    return minSpeed * Math.pow(maxSpeed / minSpeed, position / 100)
+  }
+
   const handleSpeedSliderChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const speed = parseFloat(e.target.value)
+    const position = parseFloat(e.target.value)
+    const speed = sliderPositionToSpeed(position)
     const roundedSpeed = Math.round(speed * 10) / 10
     setTempSpeed(roundedSpeed.toFixed(1))
     updateClip(selectedClip.id, { speed: roundedSpeed })
@@ -321,19 +334,19 @@ export default function PropertiesPanel() {
             <div>
               <input
                 type="range"
-                min="0.1"
-                max="16"
-                step="0.1"
-                value={parseFloat(tempSpeed) || (selectedClip.speed ?? 1)}
+                min="0"
+                max="100"
+                step="0.5"
+                value={speedToSliderPosition(parseFloat(tempSpeed) || (selectedClip.speed ?? 1))}
                 onChange={handleSpeedSliderChange}
                 className="w-full h-2 bg-gray-200 dark:bg-gray-700 rounded-lg appearance-none cursor-pointer accent-blue-600"
               />
-              <div className="flex justify-between text-xs text-gray-500 dark:text-gray-400 mt-2">
-                <span>0.1x</span>
-                <span>0.5x</span>
-                <span>1x</span>
-                <span>4x</span>
-                <span>16x</span>
+              <div className="relative text-xs text-gray-500 dark:text-gray-400 mt-2 h-4">
+                <span className="absolute left-0 -translate-x-1/2" style={{ left: '0%' }}>0.1x</span>
+                <span className="absolute -translate-x-1/2" style={{ left: '31.7%' }}>0.5x</span>
+                <span className="absolute -translate-x-1/2" style={{ left: '45.4%' }}>1x</span>
+                <span className="absolute -translate-x-1/2" style={{ left: '72.7%' }}>4x</span>
+                <span className="absolute right-0 translate-x-1/2" style={{ right: '0%' }}>16x</span>
               </div>
             </div>
           )}

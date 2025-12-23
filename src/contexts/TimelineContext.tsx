@@ -33,9 +33,10 @@ export function TimelineProvider({ children }: { children: ReactNode }) {
   const currentTimeRef = useRef(0)
 
   const allClips = tracks.flat()
-  const duration = allClips.length === 0 
-    ? 10 
-    : Math.max(...allClips.map((clip) => clip.endTime), 10)
+  const contentEndTime = allClips.length === 0 
+    ? 0 
+    : Math.max(...allClips.map((clip) => clip.endTime))
+  const duration = Math.max(contentEndTime, 10)
 
   useEffect(() => {
     currentTimeRef.current = currentTime
@@ -44,10 +45,11 @@ export function TimelineProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (isPlaying) {
       const startTime = Date.now() - currentTimeRef.current * 1000
+      const playbackEndTime = contentEndTime > 0 ? contentEndTime : duration
       const updateTime = () => {
         const elapsed = (Date.now() - startTime) / 1000
-        if (elapsed >= duration) {
-          setCurrentTime(duration)
+        if (elapsed >= playbackEndTime) {
+          setCurrentTime(playbackEndTime)
           setIsPlaying(false)
         } else {
           setCurrentTime(elapsed)
@@ -65,16 +67,17 @@ export function TimelineProvider({ children }: { children: ReactNode }) {
         cancelAnimationFrame(animationFrameRef.current)
       }
     }
-  }, [isPlaying, duration])
+  }, [isPlaying, contentEndTime, duration])
 
   const togglePlay = useCallback(() => {
+    const playbackEndTime = contentEndTime > 0 ? contentEndTime : duration
     setIsPlaying((prev) => {
-      if (!prev && currentTime >= duration) {
+      if (!prev && currentTime >= playbackEndTime) {
         setCurrentTime(0)
       }
       return !prev
     })
-  }, [currentTime, duration])
+  }, [currentTime, contentEndTime, duration])
 
   const addClipToTrack = useCallback((media: MediaFile, trackType: TrackType, startTime: number) => {
     const trackIndex = trackType === 'video' ? 0 : trackType === 'audio' ? 1 : 2
