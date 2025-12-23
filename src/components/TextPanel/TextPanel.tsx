@@ -1,20 +1,13 @@
-import { useState, useCallback, useEffect } from 'react'
+import { useState, useCallback } from 'react'
 import type { MediaFile } from '../../types/media'
 import { generateMediaId } from '../../utils/fileUtils'
-import MediaItem from '../MediaPanel/MediaItem'
+import { useMediaCleanup } from '../../hooks/useMediaCleanup'
+import MediaItem from '../Shared/MediaItem'
 
 export default function TextPanel() {
   const [mediaFiles, setMediaFiles] = useState<MediaFile[]>([])
 
-  useEffect(() => {
-    return () => {
-      mediaFiles.forEach((media) => {
-        if (media.url) {
-          URL.revokeObjectURL(media.url)
-        }
-      })
-    }
-  }, [mediaFiles])
+  useMediaCleanup(mediaFiles)
 
   const handleCreateTextOverlay = useCallback(() => {
     const textMedia: MediaFile = {

@@ -1,14 +1,8 @@
 import { useTimeline } from '../../contexts/TimelineContext'
+import { formatTime } from '../../utils/timeUtils'
 
 export default function TimelineControls() {
   const { isPlaying, currentTime, duration, setCurrentTime, togglePlay, zoom, setZoom, selectedClip, splitClip, removeClip, updateClip } = useTimeline()
-
-  const formatTime = (seconds: number): string => {
-    const mins = Math.floor(seconds / 60)
-    const secs = Math.floor(seconds % 60)
-    const ms = Math.floor((seconds % 1) * 100)
-    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}.${ms.toString().padStart(2, '0')}`
-  }
 
   const handlePreviousFrame = () => {
     if (isPlaying) {
@@ -101,9 +95,9 @@ export default function TimelineControls() {
       </button>
 
       <div className="flex-1 flex items-center justify-center gap-4">
-        <span className="text-sm text-gray-400 dark:text-gray-400 font-mono min-w-[4rem] text-center">
-          {formatTime(currentTime)}
-        </span>
+            <span className="text-sm text-gray-400 dark:text-gray-400 font-mono min-w-[4rem] text-center">
+              {formatTime(currentTime, true)}
+            </span>
         
         <button
           onClick={handlePreviousFrame}
@@ -149,9 +143,9 @@ export default function TimelineControls() {
           </svg>
         </button>
 
-        <span className="text-sm text-gray-400 dark:text-gray-400 font-mono min-w-[4rem] text-center">
-          {formatTime(duration)}
-        </span>
+            <span className="text-sm text-gray-400 dark:text-gray-400 font-mono min-w-[4rem] text-center">
+              {formatTime(duration, true)}
+            </span>
       </div>
 
       <div className="flex items-center gap-2 min-w-[200px]">

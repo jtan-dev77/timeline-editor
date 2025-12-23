@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useTimeline } from '../../contexts/TimelineContext'
+import { formatTime, parseTime } from '../../utils/timeUtils'
 
 export default function PropertiesPanel() {
   const { selectedClip, updateClip } = useTimeline()
@@ -8,33 +9,15 @@ export default function PropertiesPanel() {
   const [opacityExpanded, setOpacityExpanded] = useState(true)
   const [tempStartTime, setTempStartTime] = useState<string>('')
   const [tempEndTime, setTempEndTime] = useState<string>('')
+  const [tempSpeed, setTempSpeed] = useState<string>('')
 
-  const formatTime = (seconds: number): string => {
-    const mins = Math.floor(seconds / 60)
-    const secs = Math.floor(seconds % 60)
-    const ms = Math.floor((seconds % 1) * 100)
-    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}.${ms.toString().padStart(2, '0')}`
-  }
-
-  const parseTime = (timeString: string): number => {
-    const parts = timeString.split(':')
-    if (parts.length === 2) {
-      const [mins, secs] = parts
-      const [sec, ms] = secs.split('.')
-      const minutes = parseInt(mins) || 0
-      const seconds = parseInt(sec) || 0
-      const milliseconds = parseInt(ms || '0') || 0
-      return minutes * 60 + seconds + (milliseconds / 100)
-    }
-    return selectedClip?.startTime || 0
-  }
-
-  useEffect(() => {
-    if (selectedClip) {
-      setTempStartTime(formatTime(selectedClip.startTime))
-      setTempEndTime(formatTime(selectedClip.endTime))
-    }
-  }, [selectedClip])
+      useEffect(() => {
+        if (selectedClip) {
+          setTempStartTime(formatTime(selectedClip.startTime, true))
+          setTempEndTime(formatTime(selectedClip.endTime, true))
+          setTempSpeed((selectedClip.speed ?? 1).toFixed(1))
+        }
+      }, [selectedClip])
 
   if (!selectedClip) {
     return (
@@ -57,35 +40,58 @@ export default function PropertiesPanel() {
     setTempEndTime(e.target.value)
   }
 
-  const handleApplyTrim = () => {
-    if (!selectedClip) return
+      const handleApplyTrim = () => {
+        if (!selectedClip) return
 
-    const newStartTime = parseTime(tempStartTime)
-    const newEndTime = parseTime(tempEndTime)
+        const newStartTime = parseTime(tempStartTime, selectedClip.startTime)
+        const newEndTime = parseTime(tempEndTime, selectedClip.endTime)
 
     if (newStartTime >= 0 && newStartTime < newEndTime && newEndTime > newStartTime) {
       updateClip(selectedClip.id, {
         startTime: newStartTime,
         endTime: newEndTime,
       })
-    } else {
-      setTempStartTime(formatTime(selectedClip.startTime))
-      setTempEndTime(formatTime(selectedClip.endTime))
-    }
+        } else {
+          setTempStartTime(formatTime(selectedClip.startTime, true))
+          setTempEndTime(formatTime(selectedClip.endTime, true))
+        }
   }
 
-  const handleResetTrim = () => {
-    if (selectedClip.media.duration) {
-      updateClip(selectedClip.id, {
-        startTime: 0,
-        endTime: selectedClip.media.duration,
-      })
-    }
-  }
+      const handleResetTrim = () => {
+        if (selectedClip.media.duration) {
+          updateClip(selectedClip.id, {
+            startTime: 0,
+            endTime: selectedClip.media.duration,
+          })
+          setTempStartTime(formatTime(0, true))
+          setTempEndTime(formatTime(selectedClip.media.duration, true))
+        }
+      }
 
-  const handleSpeedChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleSpeedSliderChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const speed = parseFloat(e.target.value)
+    setTempSpeed(speed.toFixed(1))
     updateClip(selectedClip.id, { speed })
+  }
+
+  const handleSpeedInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setTempSpeed(e.target.value)
+  }
+
+  const handleSpeedInputBlur = () => {
+    const speed = parseFloat(tempSpeed)
+    if (!isNaN(speed) && speed >= 0.1 && speed <= 16) {
+      updateClip(selectedClip.id, { speed })
+      setTempSpeed(speed.toFixed(1))
+    } else {
+      setTempSpeed((selectedClip.speed ?? 1).toFixed(1))
+    }
+  }
+
+  const handleSpeedInputKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      e.currentTarget.blur()
+    }
   }
 
   const handleOpacityChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -136,7 +142,7 @@ export default function PropertiesPanel() {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
                 </svg>
               </button>
-              <span className="text-sm font-mono text-yellow-500 dark:text-yellow-400">{formatTime(duration)}</span>
+                  <span className="text-sm font-mono text-yellow-500 dark:text-yellow-400">{formatTime(duration, true)}</span>
               <button
                 onClick={() => setTrimExpanded(!trimExpanded)}
                 className="p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-400"
@@ -163,8 +169,8 @@ export default function PropertiesPanel() {
                   <div className="absolute right-2 top-1/2 transform -translate-y-1/2 flex flex-col gap-0.5">
                     <button
                       onClick={() => {
-                        const newTime = parseTime(tempStartTime) + 0.01
-                        setTempStartTime(formatTime(Math.max(0, newTime)))
+                            const newTime = parseTime(tempStartTime, selectedClip.startTime) + 0.01
+                            setTempStartTime(formatTime(Math.max(0, newTime), true))
                       }}
                       className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 text-xs leading-none"
                     >
@@ -172,8 +178,8 @@ export default function PropertiesPanel() {
                     </button>
                     <button
                       onClick={() => {
-                        const newTime = parseTime(tempStartTime) - 0.01
-                        setTempStartTime(formatTime(Math.max(0, newTime)))
+                            const newTime = parseTime(tempStartTime, selectedClip.startTime) - 0.01
+                            setTempStartTime(formatTime(Math.max(0, newTime), true))
                       }}
                       className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 text-xs leading-none"
                     >
@@ -198,9 +204,9 @@ export default function PropertiesPanel() {
                       onClick={(e) => {
                         e.preventDefault()
                         e.stopPropagation()
-                        const currentEndTime = parseTime(tempEndTime) || selectedClip.endTime
+                        const currentEndTime = parseTime(tempEndTime, selectedClip.endTime)
                         const newTime = currentEndTime + 0.01
-                        setTempEndTime(formatTime(newTime))
+                        setTempEndTime(formatTime(newTime, true))
                       }}
                       className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 text-xs leading-none"
                     >
@@ -210,10 +216,10 @@ export default function PropertiesPanel() {
                       onClick={(e) => {
                         e.preventDefault()
                         e.stopPropagation()
-                        const currentEndTime = parseTime(tempEndTime) || selectedClip.endTime
+                        const currentEndTime = parseTime(tempEndTime, selectedClip.endTime)
                         const newTime = currentEndTime - 0.01
-                        const minTime = (parseTime(tempStartTime) || selectedClip.startTime) + 0.01
-                        setTempEndTime(formatTime(Math.max(minTime, newTime)))
+                        const minTime = parseTime(tempStartTime, selectedClip.startTime) + 0.01
+                        setTempEndTime(formatTime(Math.max(minTime, newTime), true))
                       }}
                       className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 text-xs leading-none"
                     >
@@ -242,9 +248,15 @@ export default function PropertiesPanel() {
               <h3 className="text-sm font-medium text-gray-900 dark:text-gray-100">Speed</h3>
             </div>
             <div className="flex items-center gap-2">
-              <button className="px-3 py-1 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded border border-gray-300 dark:border-gray-600 text-sm font-medium">
-                {selectedClip.speed ?? 1}x
-              </button>
+              <input
+                type="text"
+                value={tempSpeed}
+                onChange={handleSpeedInputChange}
+                onBlur={handleSpeedInputBlur}
+                onKeyDown={handleSpeedInputKeyDown}
+                className="w-16 px-3 py-1 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded border border-gray-300 dark:border-gray-600 text-sm font-medium text-center focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+              <span className="text-sm font-medium text-gray-900 dark:text-gray-100">x</span>
               <button
                 onClick={() => setSpeedExpanded(!speedExpanded)}
                 className="p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-400"
@@ -264,7 +276,7 @@ export default function PropertiesPanel() {
                 max="16"
                 step="0.1"
                 value={selectedClip.speed ?? 1}
-                onChange={handleSpeedChange}
+                onChange={handleSpeedSliderChange}
                 className="w-full h-2 bg-gray-200 dark:bg-gray-700 rounded-lg appearance-none cursor-pointer accent-blue-600"
               />
               <div className="flex justify-between text-xs text-gray-500 dark:text-gray-400 mt-2">

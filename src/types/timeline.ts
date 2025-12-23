@@ -7,6 +7,7 @@ export interface TimelineClip {
   startTime: number
   endTime: number
   trackIndex: number
+  originalDuration?: number
   opacity?: number
   audioLevel?: number
   speed?: number

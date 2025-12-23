@@ -12,10 +12,18 @@ export default function PreviewArea() {
     const textTrack = tracks[2] || []
 
     const videoClip = videoTrack.find(
-      (clip) => currentTime >= clip.startTime && currentTime < clip.endTime
+      (clip) => {
+        const clipStart = clip.startTime
+        const clipEnd = clip.endTime
+        return currentTime >= clipStart && currentTime < clipEnd
+      }
     )
     const audioClip = audioTrack.find(
-      (clip) => currentTime >= clip.startTime && currentTime < clip.endTime
+      (clip) => {
+        const clipStart = clip.startTime
+        const clipEnd = clip.endTime
+        return currentTime >= clipStart && currentTime < clipEnd
+      }
     )
     const textClips = textTrack.filter(
       (clip) => currentTime >= clip.startTime && currentTime < clip.endTime

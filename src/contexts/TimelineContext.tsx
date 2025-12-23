@@ -88,6 +88,7 @@ export function TimelineProvider({ children }: { children: ReactNode }) {
       startTime,
       endTime: startTime + duration,
       trackIndex,
+      originalDuration: duration,
       opacity: 100,
       audioLevel: 100,
       speed: 1,
@@ -121,6 +122,20 @@ export function TimelineProvider({ children }: { children: ReactNode }) {
         track.map((clip) => {
           if (clip.id === clipId) {
             const updated = { ...clip, ...updates }
+            
+            if ('speed' in updates && updates.speed !== undefined) {
+              const newSpeed = updates.speed
+              let originalDuration = updated.originalDuration
+              
+              if (originalDuration === undefined) {
+                originalDuration = updated.endTime - updated.startTime
+                updated.originalDuration = originalDuration
+              }
+              
+              const newDuration = originalDuration / newSpeed
+              updated.endTime = updated.startTime + newDuration
+            }
+            
             if (selectedClip?.id === clipId) {
               setSelectedClip(updated)
             }
@@ -150,12 +165,14 @@ export function TimelineProvider({ children }: { children: ReactNode }) {
         const firstPart: TimelineClip = {
           ...clip,
           endTime: splitTime,
+          originalDuration: clip.originalDuration || (clip.endTime - clip.startTime),
         }
 
         const secondPart: TimelineClip = {
           ...clip,
           id: generateMediaId(),
           startTime: splitTime,
+          originalDuration: clip.originalDuration || (clip.endTime - clip.startTime),
         }
 
         const newTrack = [...track]

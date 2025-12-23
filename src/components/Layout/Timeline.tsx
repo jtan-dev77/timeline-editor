@@ -1,5 +1,6 @@
 import { useRef, useState, useEffect } from 'react'
 import { useTimeline } from '../../contexts/TimelineContext'
+import { formatTime } from '../../utils/timeUtils'
 import TimelineTrack from '../Timeline/TimelineTrack'
 import TimelineControls from '../Timeline/TimelineControls'
 
@@ -11,12 +12,6 @@ export default function Timeline() {
   const timelineRef = useRef<HTMLDivElement>(null)
   const [isDraggingPlayhead, setIsDraggingPlayhead] = useState(false)
   const playheadPosition = currentTime * pixelsPerSecond + 96
-
-  const formatTime = (seconds: number): string => {
-    const mins = Math.floor(seconds / 60)
-    const secs = Math.floor(seconds % 60)
-    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`
-  }
 
   const handlePlayheadMouseDown = (e: React.MouseEvent) => {
     e.preventDefault()

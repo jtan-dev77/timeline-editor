@@ -1,18 +1,25 @@
 import { useRef, useState } from 'react'
-import { isValidTextFile } from '../../utils/fileUtils'
 
 interface UploadAreaProps {
   onFilesSelected: (files: File[]) => void
+  accept: string
+  supportedFormats: string
+  validateFile: (file: File) => boolean
 }
 
-export default function UploadArea({ onFilesSelected }: UploadAreaProps) {
+export default function UploadArea({ 
+  onFilesSelected, 
+  accept, 
+  supportedFormats,
+  validateFile 
+}: UploadAreaProps) {
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [isDragging, setIsDragging] = useState(false)
 
   const handleFileSelect = (files: FileList | null) => {
     if (!files) return
 
-    const validFiles = Array.from(files).filter(isValidTextFile)
+    const validFiles = Array.from(files).filter(validateFile)
     if (validFiles.length > 0) {
       onFilesSelected(validFiles)
     }
@@ -61,7 +68,7 @@ export default function UploadArea({ onFilesSelected }: UploadAreaProps) {
         ref={fileInputRef}
         type="file"
         multiple
-        accept=".txt,.srt,.vtt,text/plain,text/vtt,application/x-subrip"
+        accept={accept}
         onChange={handleChange}
         className="hidden"
       />
@@ -83,7 +90,7 @@ export default function UploadArea({ onFilesSelected }: UploadAreaProps) {
           Upload Media
         </p>
         <p className="text-xs text-gray-500 dark:text-gray-400">
-          Supports TXT, SRT, VTT
+          Supports {supportedFormats}
         </p>
       </div>
     </div>

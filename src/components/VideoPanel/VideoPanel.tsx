@@ -1,23 +1,16 @@
-import { useState, useCallback, useEffect } from 'react'
+import { useState, useCallback } from 'react'
 import type { MediaFile } from '../../types/media'
-import { getMediaType, generateMediaId } from '../../utils/fileUtils'
+import { getMediaType, generateMediaId, isValidVideoFile } from '../../utils/fileUtils'
 import { getMediaDuration } from '../../utils/mediaDuration'
-import UploadArea from './UploadArea'
-import MediaItem from '../MediaPanel/MediaItem'
+import { useMediaCleanup } from '../../hooks/useMediaCleanup'
+import UploadArea from '../Shared/UploadArea'
+import MediaItem from '../Shared/MediaItem'
+import { SUPPORTED_VIDEO_TYPES } from '../../types/media'
 
 export default function VideoPanel() {
   const [mediaFiles, setMediaFiles] = useState<MediaFile[]>([])
 
-  useEffect(() => {
-    return () => {
-      mediaFiles.forEach((media) => {
-        URL.revokeObjectURL(media.url)
-        if (media.thumbnail && media.thumbnail !== media.url) {
-          URL.revokeObjectURL(media.thumbnail)
-        }
-      })
-    }
-  }, [mediaFiles])
+  useMediaCleanup(mediaFiles)
 
   const handleFilesSelected = useCallback(async (files: File[]) => {
     const newMediaFiles = await Promise.all(
@@ -53,7 +46,12 @@ export default function VideoPanel() {
   return (
     <div className="h-full flex flex-col bg-white dark:bg-gray-800">
       <div className="flex-1 overflow-y-auto p-4 space-y-4">
-        <UploadArea onFilesSelected={handleFilesSelected} />
+        <UploadArea 
+          onFilesSelected={handleFilesSelected}
+          accept={SUPPORTED_VIDEO_TYPES.join(',')}
+          supportedFormats="MP4, MOV"
+          validateFile={isValidVideoFile}
+        />
 
         {mediaFiles.length > 0 && (
           <div className="space-y-2">
