@@ -45,7 +45,20 @@ export default function VideoPanel() {
     )
 
     const validFiles = newMediaFiles.filter((media): media is MediaFile => media !== null)
-    setMediaFiles((prev) => [...prev, ...validFiles])
+    setMediaFiles((prev) => {
+      const existingKeys = new Set(prev.map(m => `${m.name}:${m.size}`))
+      const seenInBatch = new Set<string>()
+      const uniqueNewFiles = validFiles.filter((file) => {
+        const key = `${file.name}:${file.size}`
+        if (existingKeys.has(key) || seenInBatch.has(key)) {
+          URL.revokeObjectURL(file.url)
+          return false
+        }
+        seenInBatch.add(key)
+        return true
+      })
+      return [...prev, ...uniqueNewFiles]
+    })
   }, [])
 
   const handleMediaSelect = (media: MediaFile) => {
