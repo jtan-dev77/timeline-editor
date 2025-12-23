@@ -10,6 +10,7 @@ export interface MediaFile {
   duration?: number
   size: number
   content?: string
+  waveform?: number[]
 }
 
 export const SUPPORTED_VIDEO_TYPES = ['video/mp4', 'video/quicktime']

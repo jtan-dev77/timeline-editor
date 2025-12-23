@@ -2,6 +2,7 @@ import { useState, useCallback } from 'react'
 import type { MediaFile } from '../../types/media'
 import { getMediaType, generateMediaId, isValidAudioFile } from '../../utils/fileUtils'
 import { getMediaDuration } from '../../utils/mediaDuration'
+import { generateAudioWaveform, normalizeWaveform } from '../../utils/audioWaveform'
 import { useMediaCleanup } from '../../hooks/useMediaCleanup'
 import UploadArea from '../Shared/UploadArea'
 import MediaItem from '../Shared/MediaItem'
@@ -21,6 +22,14 @@ export default function AudioPanel() {
         const url = URL.createObjectURL(file)
         const duration = await getMediaDuration(file, 'audio')
         
+        let waveform: number[] | undefined
+        try {
+          const waveformData = await generateAudioWaveform(file, 200)
+          waveform = normalizeWaveform(waveformData.peaks)
+        } catch (error) {
+          console.warn('Failed to generate waveform for', file.name, error)
+        }
+        
         const mediaFile: MediaFile = {
           id: generateMediaId(),
           name: file.name,
@@ -29,6 +38,7 @@ export default function AudioPanel() {
           url,
           size: file.size,
           duration,
+          waveform,
         }
 
         return mediaFile

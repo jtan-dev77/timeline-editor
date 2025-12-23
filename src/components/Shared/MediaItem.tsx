@@ -1,4 +1,4 @@
-import { useRef } from 'react'
+import { useRef, useState } from 'react'
 import type { MediaFile } from '../../types/media'
 import { formatFileSize } from '../../utils/fileUtils'
 import VideoIcon from '../../assets/video-icon'
@@ -13,6 +13,7 @@ interface MediaItemProps {
 
 export default function MediaItem({ media, onSelect }: MediaItemProps) {
   const dragRef = useRef<HTMLDivElement>(null)
+  const [thumbnailError, setThumbnailError] = useState(false)
 
   const handleDragStart = (e: React.DragEvent) => {
     e.dataTransfer.effectAllowed = 'move'
@@ -37,6 +38,7 @@ export default function MediaItem({ media, onSelect }: MediaItemProps) {
       dragRef.current.style.opacity = '1'
     }
   }
+  
   const getIcon = () => {
     const iconProps = { className: 'w-6 h-6' }
     switch (media.type) {
@@ -51,6 +53,8 @@ export default function MediaItem({ media, onSelect }: MediaItemProps) {
     }
   }
 
+  const hasThumbnail = (media.type === 'video' || media.type === 'image') && media.thumbnail && !thumbnailError
+
   return (
     <div
       ref={dragRef}
@@ -61,7 +65,18 @@ export default function MediaItem({ media, onSelect }: MediaItemProps) {
       onClick={() => onSelect?.(media)}
     >
       <div className="flex-shrink-0 text-gray-600 dark:text-gray-400">
-        {getIcon()}
+        {hasThumbnail ? (
+          <div className="w-12 h-12 rounded overflow-hidden bg-gray-200 dark:bg-gray-700 flex items-center justify-center">
+            <img
+              src={media.thumbnail}
+              alt={media.name}
+              className="w-full h-full object-cover"
+              onError={() => setThumbnailError(true)}
+            />
+          </div>
+        ) : (
+          getIcon()
+        )}
       </div>
       <div className="flex-1 min-w-0">
         <p className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">
@@ -74,4 +89,3 @@ export default function MediaItem({ media, onSelect }: MediaItemProps) {
     </div>
   )
 }
-

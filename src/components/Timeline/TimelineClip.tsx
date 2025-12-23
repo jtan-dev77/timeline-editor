@@ -1,6 +1,7 @@
 import { useRef, useState } from 'react'
 import type { TimelineClip as TimelineClipType } from '../../types/timeline'
 import { useTimeline } from '../../contexts/TimelineContext'
+import Waveform from './Waveform'
 
 interface TimelineClipProps {
   clip: TimelineClipType
@@ -125,36 +126,59 @@ export default function TimelineClip({ clip, pixelsPerSecond }: TimelineClipProp
     document.addEventListener('mouseup', handleMouseUp)
   }
 
+  const hasThumbnail = clip.media.type === 'video' && clip.media.thumbnail
+  const hasWaveform = clip.media.type === 'audio' && clip.media.waveform && clip.media.waveform.length > 0
+  const minWidthForThumbnail = 80
+  const minWidthForWaveform = 60
+
   return (
     <div
       ref={clipRef}
-      className={`absolute h-full ${getClipColor()} rounded cursor-move transition-colors flex items-center px-2 text-white text-xs font-medium shadow-md border-2 ${
+      className={`absolute h-full ${!hasThumbnail && !hasWaveform ? getClipColor() : ''} rounded cursor-move transition-colors flex items-center px-2 text-white text-xs font-medium shadow-md border-2 overflow-hidden ${
         isSelected ? 'border-yellow-400' : 'border-white/20'
       }`}
       style={{
         left: `${left}px`,
         width: `${Math.max(width, 60)}px`,
         zIndex: isSelected ? 10 : 1,
+        backgroundImage: hasThumbnail && width >= minWidthForThumbnail ? `url(${clip.media.thumbnail})` : undefined,
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+        backgroundColor: hasThumbnail ? 'rgba(0, 0, 0, 0.7)' : hasWaveform ? 'rgba(16, 185, 129, 0.1)' : undefined,
       }}
       onClick={handleClipClick}
       onMouseDown={handleClipMouseDown}
       title={clip.media.name}
     >
+      {hasThumbnail && width >= minWidthForThumbnail && (
+        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent" />
+      )}
+      {hasWaveform && width >= minWidthForWaveform && (
+        <div className="absolute inset-0 flex items-center justify-center">
+          <Waveform
+            peaks={clip.media.waveform!}
+            width={Math.max(width - 4, 56)}
+            height={Math.max(20, 24)}
+            color={isSelected ? '#fbbf24' : '#10b981'}
+            backgroundColor="transparent"
+          />
+        </div>
+      )}
       {isSelected && (
         <>
           <div
             ref={leftHandleRef}
-            className="absolute left-0 top-0 bottom-0 w-2 bg-yellow-400 hover:bg-yellow-500 cursor-ew-resize rounded-l"
+            className="absolute left-0 top-0 bottom-0 w-2 bg-yellow-400 hover:bg-yellow-500 cursor-ew-resize rounded-l z-20"
             onMouseDown={(e) => handleResizeStart(e, 'left')}
           />
           <div
             ref={rightHandleRef}
-            className="absolute right-0 top-0 bottom-0 w-2 bg-yellow-400 hover:bg-yellow-500 cursor-ew-resize rounded-r"
+            className="absolute right-0 top-0 bottom-0 w-2 bg-yellow-400 hover:bg-yellow-500 cursor-ew-resize rounded-r z-20"
             onMouseDown={(e) => handleResizeStart(e, 'right')}
           />
         </>
       )}
-      <span className="truncate z-10">{clip.media.name}</span>
+      <span className="truncate z-10 relative">{clip.media.name}</span>
     </div>
   )
 }

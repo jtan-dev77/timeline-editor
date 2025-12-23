@@ -2,6 +2,7 @@ import { useState, useCallback } from 'react'
 import type { MediaFile } from '../../types/media'
 import { getMediaType, generateMediaId, isValidVideoFile } from '../../utils/fileUtils'
 import { getMediaDuration } from '../../utils/mediaDuration'
+import { generateVideoThumbnail } from '../../utils/videoThumbnail'
 import { useMediaCleanup } from '../../hooks/useMediaCleanup'
 import UploadArea from '../Shared/UploadArea'
 import MediaItem from '../Shared/MediaItem'
@@ -21,6 +22,13 @@ export default function VideoPanel() {
         const url = URL.createObjectURL(file)
         const duration = await getMediaDuration(file, 'video')
         
+        let thumbnail: string | undefined
+        try {
+          thumbnail = await generateVideoThumbnail(file, 1)
+        } catch (error) {
+          console.warn('Failed to generate thumbnail for', file.name, error)
+        }
+        
         const mediaFile: MediaFile = {
           id: generateMediaId(),
           name: file.name,
@@ -29,6 +37,7 @@ export default function VideoPanel() {
           url,
           size: file.size,
           duration,
+          thumbnail,
         }
 
         return mediaFile
