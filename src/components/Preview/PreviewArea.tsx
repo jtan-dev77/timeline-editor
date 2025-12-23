@@ -1,8 +1,116 @@
-import { useEffect, useRef, useMemo } from 'react'
+import { useEffect, useRef, useMemo, useState, useCallback } from 'react'
 import { useTimeline } from '../../contexts/TimelineContext'
+import type { TimelineClip } from '../../types/timeline'
+
+function DraggableText({ 
+  textClip, 
+  onDragEnd 
+}: { 
+  textClip: TimelineClip
+  onDragEnd: (clipId: string, x: number, y: number) => void 
+}) {
+  const [isDragging, setIsDragging] = useState(false)
+  const [dragOffset, setDragOffset] = useState<{ deltaX: number; deltaY: number } | null>(null)
+  const dragStartRef = useRef<{ startX: number; startY: number; startPosX: number; startPosY: number } | null>(null)
+  const containerRef = useRef<HTMLDivElement>(null)
+
+  const baseX = textClip.textStyle?.x ?? 50
+  const baseY = textClip.textStyle?.y ?? 50
+  const displayX = isDragging && dragOffset ? baseX + dragOffset.deltaX : baseX
+  const displayY = isDragging && dragOffset ? baseY + dragOffset.deltaY : baseY
+
+  const handleMouseDown = useCallback((e: React.MouseEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    setIsDragging(true)
+    setDragOffset({ deltaX: 0, deltaY: 0 })
+    dragStartRef.current = {
+      startX: e.clientX,
+      startY: e.clientY,
+      startPosX: baseX,
+      startPosY: baseY,
+    }
+  }, [baseX, baseY])
+
+  useEffect(() => {
+    if (!isDragging) return
+
+    const handleMouseMove = (e: MouseEvent) => {
+      const parent = containerRef.current?.parentElement
+      const dragStart = dragStartRef.current
+      if (!parent || !dragStart) return
+
+      const rect = parent.getBoundingClientRect()
+      const deltaX = ((e.clientX - dragStart.startX) / rect.width) * 100
+      const deltaY = ((e.clientY - dragStart.startY) / rect.height) * 100
+
+      const clampedDeltaX = Math.max(-dragStart.startPosX, Math.min(100 - dragStart.startPosX, deltaX))
+      const clampedDeltaY = Math.max(-dragStart.startPosY, Math.min(100 - dragStart.startPosY, deltaY))
+
+      setDragOffset({ deltaX: clampedDeltaX, deltaY: clampedDeltaY })
+    }
+
+    const handleMouseUp = () => {
+      const dragStart = dragStartRef.current
+      if (dragStart && dragOffset) {
+        const finalX = Math.max(0, Math.min(100, dragStart.startPosX + dragOffset.deltaX))
+        const finalY = Math.max(0, Math.min(100, dragStart.startPosY + dragOffset.deltaY))
+        onDragEnd(textClip.id, finalX, finalY)
+      }
+      setIsDragging(false)
+      setDragOffset(null)
+      dragStartRef.current = null
+    }
+
+    document.addEventListener('mousemove', handleMouseMove)
+    document.addEventListener('mouseup', handleMouseUp)
+
+    return () => {
+      document.removeEventListener('mousemove', handleMouseMove)
+      document.removeEventListener('mouseup', handleMouseUp)
+    }
+  }, [isDragging, dragOffset, textClip.id, onDragEnd])
+
+  const style = textClip.textStyle || {
+    fontSize: 24,
+    color: '#FFFFFF',
+    fontFamily: 'Arial',
+    x: 50,
+    y: 50,
+    bold: false,
+    italic: false,
+  }
+
+  return (
+    <div
+      ref={containerRef}
+      onMouseDown={handleMouseDown}
+      style={{
+        position: 'absolute',
+        left: `${displayX}%`,
+        top: `${displayY}%`,
+        transform: 'translate(-50%, -50%)',
+        fontSize: `${style.fontSize || 24}px`,
+        color: style.color || '#FFFFFF',
+        fontFamily: style.fontFamily || 'Arial',
+        fontWeight: style.bold ? 'bold' : 'normal',
+        fontStyle: style.italic ? 'italic' : 'normal',
+        opacity: (textClip.opacity ?? 100) / 100,
+        cursor: isDragging ? 'grabbing' : 'grab',
+        userSelect: 'none',
+        padding: '8px',
+        borderRadius: '4px',
+        border: isDragging ? '2px dashed rgba(59, 130, 246, 0.8)' : '2px dashed transparent',
+        backgroundColor: isDragging ? 'rgba(59, 130, 246, 0.1)' : 'transparent',
+      }}
+    >
+      {textClip.media.content || 'Enter your text here'}
+    </div>
+  )
+}
 
 export default function PreviewArea() {
-  const { tracks, currentTime, isPlaying } = useTimeline()
+  const { tracks, currentTime, isPlaying, updateClip } = useTimeline()
   const videoRef = useRef<HTMLVideoElement>(null)
   const audioRef = useRef<HTMLAudioElement>(null)
   const prevAudioClipIdRef = useRef<string | null>(null)
@@ -33,8 +141,14 @@ export default function PreviewArea() {
     )
 
     return {
-      video: videoClip ? { clip: videoClip, offset: currentTime - videoClip.startTime } : null,
-      audio: audioClip ? { clip: audioClip, offset: currentTime - audioClip.startTime } : null,
+      video: videoClip ? { 
+        clip: videoClip, 
+        offset: (videoClip.mediaStartOffset ?? 0) + (currentTime - videoClip.startTime) 
+      } : null,
+      audio: audioClip ? { 
+        clip: audioClip, 
+        offset: (audioClip.mediaStartOffset ?? 0) + (currentTime - audioClip.startTime) 
+      } : null,
       text: textClips,
     }
   }, [tracks, currentTime])
@@ -211,78 +325,21 @@ export default function PreviewArea() {
               }
             }}
           />
-          {activeTextClips.map((textClip) => {
-            const style = textClip.textStyle || {
-              fontSize: 24,
-              color: '#FFFFFF',
-              fontFamily: 'Arial',
-              alignment: 'middle-center',
-              bold: false,
-              italic: false,
-            }
-            
-            const getAlignmentStyles = () => {
-              const alignment = style.alignment || 'middle-center'
-              const styles: React.CSSProperties = {
-                position: 'absolute',
-                pointerEvents: 'none',
-                padding: '20px',
-              }
-              
-              if (alignment === 'top-left') {
-                styles.top = '0'
-                styles.left = '0'
-              } else if (alignment === 'top-center') {
-                styles.top = '0'
-                styles.left = '50%'
-                styles.transform = 'translateX(-50%)'
-              } else if (alignment === 'top-right') {
-                styles.top = '0'
-                styles.right = '0'
-              } else if (alignment === 'middle-left') {
-                styles.top = '50%'
-                styles.left = '0'
-                styles.transform = 'translateY(-50%)'
-              } else if (alignment === 'middle-center') {
-                styles.top = '50%'
-                styles.left = '50%'
-                styles.transform = 'translate(-50%, -50%)'
-              } else if (alignment === 'middle-right') {
-                styles.top = '50%'
-                styles.right = '0'
-                styles.transform = 'translateY(-50%)'
-              } else if (alignment === 'bottom-left') {
-                styles.bottom = '0'
-                styles.left = '0'
-              } else if (alignment === 'bottom-center') {
-                styles.bottom = '0'
-                styles.left = '50%'
-                styles.transform = 'translateX(-50%)'
-              } else if (alignment === 'bottom-right') {
-                styles.bottom = '0'
-                styles.right = '0'
-              }
-              
-              return styles
-            }
-            
-            return (
-              <div
-                key={textClip.id}
-                style={{
-                  ...getAlignmentStyles(),
-                  fontSize: `${style.fontSize || 24}px`,
-                  color: style.color || '#FFFFFF',
-                  fontFamily: style.fontFamily || 'Arial',
-                  fontWeight: style.bold ? 'bold' : 'normal',
-                  fontStyle: style.italic ? 'italic' : 'normal',
-                  opacity: (textClip.opacity ?? 100) / 100,
-                }}
-              >
-                {textClip.media.content || 'Enter your text here'}
-              </div>
-            )
-          })}
+          {activeTextClips.map((textClip) => (
+            <DraggableText
+              key={textClip.id}
+              textClip={textClip}
+              onDragEnd={(clipId, x, y) => {
+                updateClip(clipId, {
+                  textStyle: {
+                    ...textClip.textStyle,
+                    x,
+                    y,
+                  },
+                })
+              }}
+            />
+          ))}
         </>
       ) : (
         <div className="text-center text-gray-500 dark:text-gray-400">

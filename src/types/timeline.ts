@@ -8,6 +8,7 @@ export interface TimelineClip {
   endTime: number
   trackIndex: number
   originalDuration?: number
+  mediaStartOffset?: number
   opacity?: number
   audioLevel?: number
   speed?: number
@@ -17,7 +18,8 @@ export interface TimelineClip {
     fontSize?: number
     color?: string
     fontFamily?: string
-    alignment?: 'top-left' | 'top-center' | 'top-right' | 'middle-left' | 'middle-center' | 'middle-right' | 'bottom-left' | 'bottom-center' | 'bottom-right'
+    x?: number
+    y?: number
     bold?: boolean
     italic?: boolean
   }

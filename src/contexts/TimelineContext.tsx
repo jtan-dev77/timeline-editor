@@ -111,7 +111,8 @@ export function TimelineProvider({ children }: { children: ReactNode }) {
           fontSize: 24,
           color: '#FFFFFF',
           fontFamily: 'Arial',
-          alignment: 'middle-center',
+          x: 50,
+          y: 50,
           bold: false,
           italic: false,
         } : undefined,
@@ -174,10 +175,14 @@ export function TimelineProvider({ children }: { children: ReactNode }) {
           return track
         }
 
+        const currentMediaOffset = clip.mediaStartOffset ?? 0
+        const splitPointInMedia = currentMediaOffset + (splitTime - clip.startTime)
+
         const firstPart: TimelineClip = {
           ...clip,
           endTime: splitTime,
           originalDuration: clip.originalDuration || (clip.endTime - clip.startTime),
+          mediaStartOffset: currentMediaOffset,
         }
 
         const secondPart: TimelineClip = {
@@ -185,6 +190,7 @@ export function TimelineProvider({ children }: { children: ReactNode }) {
           id: generateMediaId(),
           startTime: splitTime,
           originalDuration: clip.originalDuration || (clip.endTime - clip.startTime),
+          mediaStartOffset: splitPointInMedia,
         }
 
         const newTrack = [...track]

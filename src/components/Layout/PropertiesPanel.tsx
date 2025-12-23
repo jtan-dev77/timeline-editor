@@ -1,38 +1,27 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { useTimeline } from '../../contexts/TimelineContext'
 import { formatTime, parseTime } from '../../utils/timeUtils'
 
-export default function PropertiesPanel() {
+function PropertiesPanelContent() {
   const { selectedClip, updateClip } = useTimeline()
   const [trimExpanded, setTrimExpanded] = useState(true)
   const [speedExpanded, setSpeedExpanded] = useState(true)
   const [opacityExpanded, setOpacityExpanded] = useState(true)
-  const [tempStartTime, setTempStartTime] = useState<string>('')
-  const [tempEndTime, setTempEndTime] = useState<string>('')
-  const [tempSpeed, setTempSpeed] = useState<string>('')
   const [fontSizeExpanded, setFontSizeExpanded] = useState(true)
   const [colorExpanded, setColorExpanded] = useState(true)
-
-  useEffect(() => {
-    if (selectedClip) {
-      setTempStartTime(formatTime(selectedClip.startTime, true))
-      setTempEndTime(formatTime(selectedClip.endTime, true))
-      const currentSpeed = selectedClip.speed ?? 1
-      setTempSpeed(currentSpeed.toFixed(1))
-    }
-  }, [selectedClip, selectedClip?.speed])
+  
+  const [tempStartTime, setTempStartTime] = useState<string>(() => 
+    selectedClip ? formatTime(selectedClip.startTime, true) : ''
+  )
+  const [tempEndTime, setTempEndTime] = useState<string>(() => 
+    selectedClip ? formatTime(selectedClip.endTime, true) : ''
+  )
+  const [tempSpeed, setTempSpeed] = useState<string>(() => 
+    selectedClip ? (selectedClip.speed ?? 1).toFixed(1) : '1.0'
+  )
 
   if (!selectedClip) {
-    return (
-      <div className="w-80 h-full bg-white dark:bg-gray-800 border-l border-gray-200 dark:border-gray-700 p-4">
-        <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
-          Properties
-        </h2>
-        <div className="text-sm text-gray-500 dark:text-gray-400">
-          Select a clip to edit its properties
-        </div>
-      </div>
-    )
+    return null
   }
 
   const handleStartTimeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -52,7 +41,7 @@ export default function PropertiesPanel() {
         const originalDuration = selectedClip.originalDuration ?? (selectedClip.media.duration ?? (selectedClip.endTime - selectedClip.startTime))
 
         if (newStartTime >= 0 && newStartTime < newEndTime && newEndTime > newStartTime) {
-          let finalStartTime = newStartTime
+          const finalStartTime = newStartTime
           let finalEndTime = newEndTime
 
           if (isVideoOrAudio) {
@@ -64,9 +53,14 @@ export default function PropertiesPanel() {
             }
           }
 
+          const currentMediaOffset = selectedClip.mediaStartOffset ?? 0
+          const startTimeDiff = finalStartTime - selectedClip.startTime
+          const newMediaOffset = startTimeDiff > 0 ? currentMediaOffset + startTimeDiff : currentMediaOffset
+
           updateClip(selectedClip.id, {
             startTime: finalStartTime,
             endTime: finalEndTime,
+            mediaStartOffset: newMediaOffset,
           })
         } else {
           setTempStartTime(formatTime(selectedClip.startTime, true))
@@ -79,6 +73,7 @@ export default function PropertiesPanel() {
           updateClip(selectedClip.id, {
             startTime: 0,
             endTime: selectedClip.media.duration,
+            mediaStartOffset: 0,
           })
           setTempStartTime(formatTime(0, true))
           setTempEndTime(formatTime(selectedClip.media.duration, true))
@@ -139,7 +134,8 @@ export default function PropertiesPanel() {
     fontSize: 24,
     color: '#FFFFFF',
     fontFamily: 'Arial',
-    alignment: 'middle-center',
+    x: 50,
+    y: 50,
     bold: false,
     italic: false,
   }
@@ -501,34 +497,6 @@ export default function PropertiesPanel() {
               <div className="flex items-center justify-between mb-3">
                 <div className="flex items-center gap-2">
                   <svg className="w-5 h-5 text-gray-600 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h7" />
-                  </svg>
-                  <h3 className="text-sm font-medium text-gray-900 dark:text-gray-100">Alignment</h3>
-                </div>
-              </div>
-              <div>
-                <select
-                  value={textStyle.alignment || 'middle-center'}
-                  onChange={(e) => handleTextStyleUpdate({ alignment: e.target.value as typeof textStyle.alignment })}
-                  className="w-full px-3 py-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded border border-gray-300 dark:border-gray-600 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                >
-                  <option value="top-left">Top Left</option>
-                  <option value="top-center">Top Center</option>
-                  <option value="top-right">Top Right</option>
-                  <option value="middle-left">Middle Left</option>
-                  <option value="middle-center">Middle Center</option>
-                  <option value="middle-right">Middle Right</option>
-                  <option value="bottom-left">Bottom Left</option>
-                  <option value="bottom-center">Bottom Center</option>
-                  <option value="bottom-right">Bottom Right</option>
-                </select>
-              </div>
-            </div>
-
-            <div className="p-4">
-              <div className="flex items-center justify-between mb-3">
-                <div className="flex items-center gap-2">
-                  <svg className="w-5 h-5 text-gray-600 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V8a2 2 0 00-2-2h-5m-4 0V5a2 2 0 012-2h4a2 2 0 012 2v1m-4 4a2 2 0 100 4 2 2 0 000-4zm0 0c-1.306 0-2.417.835-2.83 2M9 14a3.001 3.001 0 00-2.83 2M15 11h3m-3 4h2" />
                   </svg>
                   <h3 className="text-sm font-medium text-gray-900 dark:text-gray-100">Font Family</h3>
@@ -587,4 +555,23 @@ export default function PropertiesPanel() {
       </div>
     </div>
   )
+}
+
+export default function PropertiesPanel() {
+  const { selectedClip } = useTimeline()
+  
+  if (!selectedClip) {
+    return (
+      <div className="w-80 h-full bg-white dark:bg-gray-800 border-l border-gray-200 dark:border-gray-700 p-4">
+        <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
+          Properties
+        </h2>
+        <div className="text-sm text-gray-500 dark:text-gray-400">
+          Select a clip to edit its properties
+        </div>
+      </div>
+    )
+  }
+  
+  return <PropertiesPanelContent key={selectedClip.id} />
 }
